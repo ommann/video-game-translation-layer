@@ -1,10 +1,13 @@
 memoize = require('lib.knife.memoize')
 image   = require('lib.cargo').init('img')
+layer   = require('lib.cargo').init('output')
 root    = require('root')
 
 target = 17270
 count  = 0
 flag = {}
+
+output = {x = 242, y = 0}
 
 love.update = function()
   if target > count then
@@ -16,8 +19,9 @@ end
 
 love.draw = function ()
   love.graphics.draw( frame(count) )
-  love.graphics.print(tostring(flag.bubble), 0, 162)
-  love.graphics.print(tostring(flag.gender), 0, 186)
+  love.graphics.draw( frame(count), output.x, output.y )
+
+  draw_layer(flag, root)
 end
 
 love.keypressed = function(key)
@@ -47,7 +51,7 @@ scan = function(children, frame)
     if compare(frame, pattern, child) then
       flag[child.name] = true
 
-      if child.children then
+      if child.children then                  --else stop scanning?
         scan(child.children, frame)
       end
     end
@@ -67,4 +71,14 @@ compare = function(frame, pattern, child)
   end
 
   return true
+end
+
+draw_layer = function(flag, children)
+  for name,child in pairs(children) do
+    if flag[name] then
+      love.graphics.draw( layer[name], output.x + child.x, output.y + child.y )
+
+      if child.children then draw_layer(flag, child.children ) end
+    end
+  end
 end
