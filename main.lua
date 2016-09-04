@@ -1,84 +1,47 @@
-memoize = require('lib.knife.memoize')
-image   = require('lib.cargo').init('img')
-layer   = require('lib.cargo').init('output')
-root    = require('root')
+gd = require 'gd'
 
-target = 17270
-count  = 0
-flag = {}
+mode = "fceux"
 
-output = {x = 242, y = 0}
-
-love.update = function()
-  if target > count then
-    count = count + 1
-  end
-
-  scan(root, frame(count) )
+if mode == "fceux" then
+	frameadvance   = emu.frameadvance
+	getscreenpixel = function(a,b,c) return emu.getscreenpixel(a,b+8,c) end
+	drawimage 		 = function(a,b,c) return gui.drawimage(a,b+8,c) end
+	file = "score"
+	x,y = 97,176
 end
 
-love.draw = function ()
-  love.graphics.draw( frame(count) )
-  love.graphics.draw( frame(count), output.x, output.y )
-
-  draw_layer(flag, root)
+if mode == "vba" then
+	frameadvance   = vba.frameadvance
+	getscreenpixel = gui.getpixel
+	drawimage			 = gui.drawimage
+	file = "press_start"
+	x,y = 50,1
 end
 
-love.keypressed = function(key)
-  target = target + 60
+input  = gd.createFromPng("input/"..file..".png")
+output = gd.createFromPng("output/"..file..".png"):gdStr()
 
-  if target > 17270 then target = 17270 end
+function compare(x, y, input)
+	for i = 0, input:sizeX()-1 do
+		for j = 0, input:sizeY()-1 do
+			local r1, g1, b1 = getscreenpixel(x+i, y+j, true)
+			local a2, r2, g2, b2 = gui.parsecolor( input:getPixel(i, j) )
+
+			if r1 ~= r2 or g1 ~= g2 or b1 ~= b2 then
+				return false
+			end
+		end
+	end
+
+	return true
 end
 
-frame = function(name)
-  return love.graphics.newImage("frame/"..name..".png")
-end
-
-pixels = memoize( function(frame)
-  return frame:getData()
+gui.register( function()
+		if compare(x, y, input) then
+			drawimage(x, y, output)
+		end
 end )
 
-scan = function(children, frame)
-  if frame:type() ~= "ImageData" then
-    frame = frame:getData()
-  end
-
-  for _,child in pairs(children) do
-    local pattern = pixels(child.image)
-
-    flag[child.name] = false
-
-    if compare(frame, pattern, child) then
-      flag[child.name] = true
-
-      if child.children then                  --else stop scanning?
-        scan(child.children, frame)
-      end
-    end
-  end
-end
-
-compare = function(frame, pattern, child)
-  for y = 0, pattern:getHeight()-1 do
-    for x = 0, pattern:getWidth()-1 do
-      local r1, g1, b1 = frame:getPixel(x + child.x, y + child.y)
-      local r2, g2, b2 = pattern:getPixel(x, y)
-
-      if r1 ~= r2 or g1 ~= g2 or b1 ~= b2 then
-        return false
-      end
-    end
-  end
-
-  return true
-end
-
-draw_layer = function(flag, children)
-  for name,child in pairs(children) do
-    if flag[name] then
-      love.graphics.draw( layer[name], output.x + child.x, output.y + child.y )
-
-      if child.children then draw_layer(flag, child.children ) end
-    end
-  end
+while true do
+	frameadvance()
 end
