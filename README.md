@@ -6,6 +6,6 @@ The script looks from given coordinates for a certain image and if the correct i
 Script works on FCEUX, VBA-rr and DeSmuME emulators. Script is dependent on [lua-gd](https://github.com/ittner/lua-gd).
 
 # Example
-![alt text](/example.png "Scratch leads to victory!")
+![alt text](/example_pokemon.png "Scratch leads to victory!")
 
 The japanese for "scratch" have been painted over with "scratch" taken from FireRed's international release. The pixels can be painted to be anything, in this case inverted colors.
